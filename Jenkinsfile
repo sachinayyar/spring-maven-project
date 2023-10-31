@@ -1,60 +1,62 @@
-#! /usr/bin/env groovy
+def mvnCmd = "mvn -s configuration/settings.xml"
+def templatePath = "cicd/template-acm.json"
+
+def ocpUatSonarqubeUrl = ""
 
 pipeline {
-
-  agent {
-    label 'maven'
-  }
-
-  stages {
-    stage('Build') {
-      steps {
-        echo 'Building..'
+    agent {label 'customagent'}
+    
+    environment {
+        PROJECT_NAME ="test-project"
+        NAME = "firstbuild"
+        ENV_DEV = "dev"
+        QUAY_REPO_NAME_DEV="fuse-dev/dfdc"
         
-        // Add steps here
-      }
+        QUAY_URL="https://"
     }
-    stage('Create Container Image') {
-      steps {
-        echo 'Create Container Image..'
+    
+    stages {
+        stage('checkout'){
+            steps {
+                checkout scm
+            }
+        } //end of stage checkout
         
-        script {
-openshift.withCluster() { 
-  openshift.withProject("test-project") {
-  
-    def buildConfigExists = openshift.selector("bc", "codelikethewind").exists() 
-    
-    if(!buildConfigExists){ 
-      openshift.newBuild("--name=codelikethewind", "--docker-image=registry.redhat.io/jboss-eap-7/eap74-openjdk8-openshift-rhel7", "--binary") 
-    } 
-    
-    openshift.selector("bc", "codelikethewind").startBuild("--from-file=target/springboot-docker-demo-0.0.1-SNAPSHOT.jar", "--follow") } }
-
+        
+        stage('source code build') {
+            steps {
+                sh "${mvnCmd} clean package -Dsettings.security=configuration/settings-security.xml -DskipTests=true -Dversion=${env.BUILD_NUMBER}"
+            }
+        } //end of stage code compile
+        
+        stage ('buildconfig template') {
+            steps{
+                script{
+                    try{
+                        openshift.withCluster() {
+                            openshift.withProject(env.PROJECT_NAME) {
+                                def templateSelector = openshift.selector("template","${NAME}")
+                                if(openshift.Selector("bc", [template : "${NAME}"]).exists()){
+                                    openshift.selector("bc", "${NAME}".delete());
+                                }
+                                if(openshift.selector("is", [template : "${NAME}"]).exists()){
+                                    openshift.selector("is", "${NAME}".delete());
+                                }
+                                
+                                openshift.newApp(templatePath, "-p PROJECT_NAME=${env.PROJECT_NAME} -p NAME=${env.NAME}")
+                            }
+                            
+                        }
+                    }
+                    
+                                }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
-      }
-    }
-    stage('Deploy') {
-      steps {
-        echo 'Deploying....'
-        script {
-openshift.withCluster() { 
-  openshift.withProject("test-project") { 
-    def deployment = openshift.selector("dc", "codelikethewind") 
-    
-    if(!deployment.exists()){ 
-      openshift.newApp('codelikethewind', "--as-deployment-config").narrow('svc').expose() 
-    } 
-    
-    timeout(5) { 
-      openshift.selector("dc", "codelikethewind").related('pods').untilEach(1) { 
-        return (it.object().status.phase == "Running") 
-      } 
-    } 
-  } 
-}
-
         }
-      }
     }
-  }
 }
