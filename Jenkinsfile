@@ -4,7 +4,7 @@ def templatePath = "cicd/template-acm.json"
 def ocpUatSonarqubeUrl = ""
 
 pipeline {
-    agent {label 'customagent'}
+   // agent {label 'customagent'}
     
     environment {
         PROJECT_NAME ="test-project"
