@@ -32,7 +32,7 @@ pipeline {
         stage ('buildconfig template') {
             steps{
                 script{
-                    try{
+                    
                         openshift.withCluster() {
                             openshift.withProject(env.PROJECT_NAME) {
                                 def templateSelector = openshift.selector("template","${NAME}")
@@ -53,4 +53,3 @@ pipeline {
             }
         }
     }
-}
