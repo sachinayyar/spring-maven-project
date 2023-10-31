@@ -1,4 +1,4 @@
 FROM openjdk:8-jdk-alpine
 MAINTAINER baeldung.com
-COPY target/docker-message-server-1.0.0.jar message-server-1.0.0.jar
-ENTRYPOINT ["java","-jar","/message-server-1.0.0.jar"]
+COPY target/springboot-docker-demo-0.0.1-SNAPSHOT.jar springboot-docker-demo-0.0.1-SNAPSHOT.jar
+ENTRYPOINT ["java","-jar","/springboot-docker-demo-0.0.1-SNAPSHOT.jar"]
