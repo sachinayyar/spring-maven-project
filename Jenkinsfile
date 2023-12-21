@@ -1,56 +1,54 @@
-def mvnCmd = "mvn -s configuration/settings.xml"
-def templatePath = "cicd/template-acm.json"
-
-def ocpUatSonarqubeUrl = ""
+#! /usr/bin/env groovy
 
 pipeline {
-    agent {
+
+  agent {
     label 'maven'
   }
-    environment {
-        PROJECT_NAME ="test-project"
-        NAME = "firstbuild"
-        ENV_DEV = "dev"
-        QUAY_REPO_NAME_DEV="fuse-dev/dfdc"
+
+  stages {
+    stage('Build') {
+      steps {
+        echo 'Building..'
         
-        QUAY_URL="https://"
+        sh 'mvn clean package'
+      }
+    }
+    stage('Create Container Image') {
+      steps {
+        echo 'Create Container Image..'
+        sh '''
+            oc start-build -F spring-boot --from-dir=.
+            '''
+      }
+    }
+    stage('Deployment') {
+      steps {
+        echo 'Deployment...'
+        sh '''
+            oc new-app docker.io/ayyarsachin/jen-pipeline:latest --name spring-app
+            '''
+      }
     }
     
-    stages {
-        stage('checkout'){
-            steps {
-                checkout scm
-            }
-        } //end of stage checkout
-        
-        
-        stage('source code build') {
-            steps {
-                sh "${mvnCmd} clean package -Dsettings.security=configuration/settings-security.xml -DskipTests=true -Dversion=${env.BUILD_NUMBER}"
-            }
-        } //end of stage code compile
-        
-        stage ('buildconfig template') {
-            steps{
-                script{
-                    
-                        openshift.withCluster() {
-                            openshift.withProject(env.PROJECT_NAME) {
-                                def templateSelector = openshift.selector("template","${NAME}")
-                                if(openshift.Selector("bc", [template : "${NAME}"]).exists()){
-                                    openshift.selector("bc", "${NAME}".delete());
-                                }
-                                if(openshift.selector("is", [template : "${NAME}"]).exists()){
-                                    openshift.selector("is", "${NAME}".delete());
-                                }
-                                
-                                openshift.newApp(templatePath, "-p PROJECT_NAME=${env.PROJECT_NAME} -p NAME=${env.NAME}")
-                            }
-                            
-                        }
-                    }
-                    
-                }
-            }
-        }
-    }
+//        script {
+//
+//          openshift.withCluster() { 
+//  openshift.withProject("test-project") {
+//  
+//    def buildConfigExists = openshift.selector("bc", "codelikethewind").exists() 
+//    
+//    if(!buildConfigExists){ 
+//      openshift.newBuild("--name=codelikethewind", "--docker-image=registry.redhat.io/jboss-eap-7/eap74-openjdk8-openshift-rhel7", "--binary") 
+//    } 
+//  
+//    openshift.selector("bc", "codelikethewind").startBuild("--from-file=target/simple-servlet-0.0.1-SNAPSHOT.war", "--follow") } }
+//
+//       }
+//      }
+//    }
+
+
+       
+  }
+}
