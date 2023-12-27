@@ -3,7 +3,7 @@
 pipeline {
 
   agent {
-    label 'maven'
+    label 'mymaven'
   }
 
   stages {
@@ -11,7 +11,7 @@ pipeline {
       steps {
         echo 'Building..'
         
-        sh 'mvn clean package'
+        sh '/opt/maven/bin/mvn clean package'
       }
     }
     stage('Create Container Image') {
