@@ -3,7 +3,7 @@
 pipeline {
 
   agent {
-    label 'mymaven'
+    label 'maven'
   }
 
   stages {
@@ -11,16 +11,16 @@ pipeline {
       steps {
         echo 'Building..'
         
-        sh '/opt/maven/bin/mvn clean package'
+        sh 'mvn clean package'
       }
     }
-    stage('Create Container Image') {
-      steps {
-        echo 'Create Container Image..'
-        sh '''
-            oc start-build -F spring-boot --from-dir=.
-            '''
-      }
+  stage("Docker build"){
+      steps{
+        sh 'sudo docker version'
+        sh 'sudo docker build -t ayyarsachin/first-demo-project .'
+        sh 'docker image list'
+        sh 'docker tag  ayyarsachin/first-demo-project ayyarsachin/first-demo-project:new'
+    }
     }
     stage('Deployment') {
       steps {
