@@ -1,9 +1,10 @@
 #! /usr/bin/env groovy
 
 pipeline {
-
-  agent {
-    label 'maven'
+  agent any
+  tools {
+    jdk 'java-17'
+    maven 'maven 3.8.6'
   }
 
   stages {
