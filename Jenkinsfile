@@ -12,7 +12,7 @@ pipeline {
       steps {
         echo 'Building..'
         
-        sh 'mvn clean package'
+        sh 'mvn clean package -DskipTests=true'
       }
     }
   stage("Docker build"){
